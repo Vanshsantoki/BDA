@@ -1,0 +1,82 @@
+bmscecse@bmscecse-HP-Elite-Tower-600-G9-Desktop-PC:~$ cqls
+Command 'cqls' not found, did you mean:
+  command 'ccls' from snap ccls (0.20241108)
+  command 'ccls' from deb ccls (0.20210330-1)
+See 'snap info <snapname>' for additional versions.
+bmscecse@bmscecse-HP-Elite-Tower-600-G9-Desktop-PC:~$ cqlsh
+Connected to Test Cluster at 127.0.0.1:9042
+[cqlsh 6.1.0 | Cassandra 4.1.8 | CQL spec 3.4.6 | Native protocol v5]
+Use HELP for help.
+cqlsh> CREATE KEYSPACE Library
+   ... WITH replication = {
+   ...    'class': 'SimpleStrategy',
+   ...    'replication_factor': 1
+   ... };
+cqlsh> USE Library;
+cqlsh:library> CREATE TABLE Library_Info (
+           ...     Stud_Id int,
+           ...     Book_Id int,
+           ...     Stud_Name text,
+           ...     Book_Name text,
+           ...     Date_of_issue date,
+           ...     PRIMARY KEY (Stud_Id, Book_Id)
+           ... );
+cqlsh:library> CREATE TABLE Book_Counter (
+           ...     Stud_Id int,
+           ...     Book_Id int,
+           ...     Counter counter,
+           ...     PRIMARY KEY (Stud_Id, Book_Id)
+           ... );
+cqlsh:library> BEGIN BATCH
+           ... INSERT INTO Library_Info (Stud_Id, Book_Id, Stud_Name, Book_Name, Date_of_issue)
+           ... VALUES (112, 1, 'Rahul', 'BDA', '2026-02-20');
+           ... 
+           ... INSERT INTO Library_Info (Stud_Id, Book_Id, Stud_Name, Book_Name, Date_of_issue)
+           ... VALUES (113, 2, 'Anita', 'DBMS', '2026-02-21');
+           ... APPLY BATCH;
+cqlsh:library> UPDATE Book_Counter
+           ... SET Counter = Counter + 1
+           ... WHERE Stud_Id = 112 AND Book_Id = 1;
+cqlsh:library> SELECT * FROM Library_Info;
+
+ stud_id | book_id | book_name | date_of_issue | stud_name
+---------+---------+-----------+---------------+-----------
+     113 |       2 |      DBMS |    2026-02-21 |     Anita
+     112 |       1 |       BDA |    2026-02-20 |     Rahul
+
+(2 rows)
+cqlsh:library> UPDATE Book_Counter
+           ... SET Counter = Counter + 1
+           ... WHERE Stud_Id = 112 AND Book_Id = 1;
+cqlsh:library> SELECT * FROM Book_Counter;
+
+ stud_id | book_id | counter
+---------+---------+---------
+     112 |       1 |       2
+
+(1 rows)
+cqlsh:library> UPDATE Book_Counter
+           ... SET Counter = Counter + 2
+           ... WHERE Stud_Id = 112 AND Book_Id = 1;
+cqlsh:library> SELECT * FROM Library_Info
+           ... WHERE Stud_Id = 112;
+
+ stud_id | book_id | book_name | date_of_issue | stud_name
+---------+---------+-----------+---------------+-----------
+     112 |       1 |       BDA |    2026-02-20 |     Rahul
+
+(1 rows)
+cqlsh:library> 
+cqlsh:library> SELECT Counter FROM Book_Counter
+           ... WHERE Stud_Id = 112 AND Book_Id = 1;
+
+ counter
+---------
+       4
+
+(1 rows)
+cqlsh:library> cqlsh -e "COPY Library_Info TO 'library_info.csv' WITH HEADER = TRUE;"
+           ... cqlsh -e "COPY Library_Info (Stud_Id, Book_Id, Stud_Name, Book_Name, Date_of_issue)
+           ... FROM 'library_info.csv' WITH HEADER = TRUE;"
+           ... ;
+
